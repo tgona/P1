@@ -1,68 +1,50 @@
 import tkinter as tk
-from engine import MathemagixGame
 
+# Create the main window
+root = tk.Tk()
 
-class MathemagixGUI:
-    def __init__(self, grid_size):
-        self.game = MathemagixGame(grid_size)
+# Create the header
+header = tk.Frame(root)
+header.pack(fill="x")
 
-        self.root = tk.Tk()
-        self.root.title("Mathemagix")
+# Create the score labels
+player1_score = tk.Label(header, text="Player 1: 0")
+player1_score.pack(side="left")
+target_score = tk.Label(header, text="Target Score: 21")
+target_score.pack(side="left")
+player2_score = tk.Label(header, text="Player 2: 0")
+player2_score.pack(side="right")
 
-        self.number_buttons = []
+# Create the grid
+grid = tk.Frame(root)
+grid.pack(fill="both", expand=True)
 
-        self.create_number_buttons()
-        self.create_score_labels()
+# Create the buttons
+buttons = []
+for i in range(5):
+    for j in range(5):
+        button = tk.Button(grid, text=str(i * 5 + j + 1), width=10, height=5)
+        button.grid(row=i, column=j)
+        buttons.append(button)
+# Define the click handler function
+def click_handler(event):
+    # Get the button that was clicked
+    button = event.widget
 
-        self.game.start_new_round()
+    # Update the score labels
+    player1_score.config(text="Player 1: " + str(button.cget("text")))
+    player2_score.config(text="Player 2: " + str(button.cget("text")))
 
-    def create_number_buttons(self):
-        for row in range(self.game.grid_size):
-            row_buttons = []
-            for col in range(self.game.grid_size):
-                number = self.game.grid[row][col]
-                button = tk.Button(
-                    self.root, text=number.value, width=4, height=2,
-                    command=lambda r=row, c=col: self.button_click(r, c)
-                )
-                button.grid(row=row, column=col, padx=5, pady=5)
-                row_buttons.append(button)
-            self.number_buttons.append(row_buttons)
+    # Change the background color of the button to dark gray
+    button.config(bg="#444444")
 
-    def create_score_labels(self):
-        player1_label = tk.Label(self.root, text="Player 1 Score:")
-        player1_label.grid(row=self.game.grid_size, column=0, pady=10)
+    # If the button is clicked again, change the background color back to normal
+    if button.cget("bg") == "#444444":
+        button.config(bg="white")
 
-        player1_score = tk.Label(self.root, textvariable=self.game.player1_score)
-        player1_score.grid(row=self.game.grid_size, column=1, pady=10)
+# Bind the click event to each button
+for button in buttons:
+    button.bind("<Button-1>", click_handler)
 
-        player2_label = tk.Label(self.root, text="Player 2 Score:")
-        player2_label.grid(row=self.game.grid_size, column=2, pady=10)
-
-        player2_score = tk.Label(self.root, textvariable=self.game.player2_score)
-        player2_score.grid(row=self.game.grid_size, column=3, pady=10)
-
-    def button_click(self, row, col):
-        number = self.game.grid[row][col]
-
-        if self.game.current_player == 1:
-            self.number_buttons[row][col].config(state=tk.DISABLED)
-        else:
-            self.number_buttons[row][col].config(state=tk.DISABLED)
-
-        self.game.select_numbers(number)
-
-        winner = self.game.check_win_condition()
-        if winner:
-            print("Final Score:")
-            print("Player 1 Score:", self.game.player1_score)
-            print("Player 2 Score:", self.game.player2_score)
-            print("Player", winner, "wins!")
-
-    def run(self):
-        self.root.mainloop()
-
-
-if __name__ == "__main__":
-    game = MathemagixGUI(4)
-    game.run()
+# Start the main loop
+root.mainloop()
