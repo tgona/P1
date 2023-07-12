@@ -1,7 +1,6 @@
 import random
 
 class Number:
-    #If the value is ever set to None, the grid space should just be blank and unselectable
     def __init__(self, value, row, col):
         self.value = value
         self.number = value
@@ -23,59 +22,67 @@ class MathemagixGame:
         self.player1_score = 0
         self.player2_score = 0
         self.grid = []
-        self.current_player = 1
         self.grid_size = grid_size
+        self.current_player = 1
+        self.state = None
+
+    def switch_mode(self):
+        if self.mode == "comp":
+            self.mode = "text"
+        else:
+            self.mode = "comp"
 
     def start_new_round(self):
         self.player1_score = 0
         self.player2_score = 0
         self.generate_grid()
-        self.target_score = random.randint(50, 100)
+        self.target_score = random.randint(100, 250)
 
     def generate_grid(self):
-        self.grid = [[Number(random.randint(1, 9),a,b) for a in range(self.grid_size)] for b in range(self.grid_size)]
+        self.grid = [[Number(random.randint(1, 9), a, b) for a in range(self.grid_size)] for b in range(self.grid_size)]
 
-    def select_numbers(self):
-        first_check = True
-        while first_check:
-            #Add code here that just takes the selected grid space from the ui rather than requiring user input
-            row = int(input(f"Enter the row (0-{self.grid_size-1}) for your selection: "))
-            column = int(input(f"Enter the column (0-{self.grid_size-1}) for your selection: "))
-
-            number = self.grid[row][column]
-            if number.selected:
-                print("Selected position is empty. Try again.")
-            else:
-                first_check = False
-        #replace the selection type input with a simple "Enter" button that ends the turn once the operation is selected from a button menu on the side of the screen
-        selection_type = input("Enter '1' to select one number or '2' to select two numbers: ")
-        number.selectNumber()
-        if selection_type == "1":
-            operation = input(f"Enter an operation from [+,-,*,/]")
-            self.perform_operation_single(number, operation)
+    def select_numbers(self, action):
+        first_number = action[1], action[2]
+        self.grid[first_number[0]][first_number[1]].selectNumber()
+        
+        if len(action) > 3:
+            second_number = action[3], action[4]
+            self.grid[second_number[0]][second_number[1]].selectNumber()
+        
+        operation = action[0]
+        if len(action) == 3:
+            self.perform_operation_single(self.grid[first_number[0]][first_number[1]], operation)
         else:
-            flag = True
-            while flag:
-                #Add code here that just takes the selected grid space from the ui rather than requiring user input
-                row = int(input(f"Enter the row (0-{self.grid_size-1}) for your selection: "))
-                column = int(input(f"Enter the column (0-{self.grid_size-1}) for your selection: "))
-                number2 = self.grid[row][column]
-                if not number2.selected:
-                    operation = input(f"Enter an operation from [+,-,*,/]")
-                    self.perform_operation(number, number2, operation)
-                    number2.selectNumber()
-                    flag = False
-                else:
-                    print("Try again, that is an empty square")
+            self.perform_operation(self.grid[first_number[0]][first_number[1]], self.grid[second_number[0]][second_number[1]], operation)
 
-    def takeTurn(self):
-        self.select_numbers()
-        self.switch_players()
+    def update_state(self):
+        player_score = self.player1_score if self.current_player == 1 else self.player2_score
+        opponent_score = self.player2_score if self.current_player == 1 else self.player1_score
+        grid_configuration = [number.value if not number.selected else None for row in self.grid for number in row]
+        self.state = [player_score, opponent_score, self.target_score, self.grid_size, grid_configuration]
 
+    def step(self, action):
+        self.select_numbers(action)
+        self.update_state()
+
+        done = self.check_win_condition()
+        reward = 0
+        penalty = -0.05
+
+        if done:
+            if self.current_player == 1 and self.player1_score == self.target_score:
+                reward = 1
+            elif self.current_player == 2 and self.player2_score == self.target_score:
+                reward = 1
+            else:
+                reward = -1
+
+        reward += penalty
+
+        return self.state, reward, done
 
     def check_adjacency(self, num1, num2):
-
-        if abs(num1.row-num2.row) > 1 or abs(num1.col-num2.col) > 1 or num2.selected:
+        if abs(num1.row - num2.row) > 1 or abs(num1.col - num2.col) > 1 or num2.selected:
             return False
         return True
     
@@ -89,7 +96,6 @@ class MathemagixGame:
                 self.player1_score *= num1.number
             else:
                 if self.player1_score % num1.number != 0:
-                    #for now this will default to addition, fix later
                     self.player1_score += num1.number
                 else:
                     self.player1_score /= num1.number
@@ -102,10 +108,10 @@ class MathemagixGame:
                 self.player2_score *= num1.number
             else:
                 if self.player2_score % num1.number != 0:
-                    #for now this will default to addition, fix later
                     self.player2_score += num1.number
                 else:
-                    self.player2_score /= num1.score
+                    self.player2_score /= num1.number
+    
     def perform_operation(self, num1, num2, operation):
         if self.current_player == 1:
             if operation == "+":
@@ -116,7 +122,6 @@ class MathemagixGame:
                 self.player1_score += num1.number * num2.number
             else:
                 if num1.value % num2.value != 0:
-                    #for now this will default to addition, fix later
                     self.player1_score += num1.number + num2.number
                 else:
                     self.player1_score += num1.number / num2.number
@@ -129,47 +134,13 @@ class MathemagixGame:
                 self.player2_score += num1.number * num2.number
             else:
                 if num1.value % num2.value != 0:
-                    #for now this will default to addition, fix later
                     self.player2_score += num1.number + num2.number
                 else:
                     self.player2_score += num1.number / num2.number
-    def switch_players(self):
-        self.current_player = 2 if self.current_player == 1 else 1
-
-    def check_win_condition(self):
-        if self.player1_score == self.target_score:
-            return 1
-        elif self.player2_score == self.target_score:
-            return 2
-        return None
     
-
-# Example usage
-game = MathemagixGame(4)
-game.start_new_round()
-print("Target Score:", game.target_score)
-
-while True:
-    # Display the grid with numbers
-    print("Grid:")
-    for row in game.grid:
-        for number in row:
-            print(number, end=" ")
-        print()
-
-    print("Player 1 Score:", game.player1_score)
-    print("Player 2 Score:", game.player2_score)
-
-
-
-    game.takeTurn()
-
-    winner = game.check_win_condition()
-    if winner:
-        print("Final Score:")
-        print("Player 1 Score:", game.player1_score)
-        print("Player 2 Score:", game.player2_score)
-        print("Player", winner, "wins!")
-        break
-
-    print()
+    def check_win_condition(self):
+        if self.current_player == 1 and self.player1_score == self.target_score:
+            return True
+        elif self.current_player == 2 and self.player2_score == self.target_score:
+            return True
+        return False

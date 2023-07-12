@@ -22,21 +22,22 @@ class MathemagixGame:
         self.player1_score = 0
         self.player2_score = 0
         self.grid = []
-        self.mode = "text"
+        self.gridValues = []
+        self.mode = "comp"
         self.current_player = 1
         self.grid_size = grid_size
 
     def switch_mode(self):
-        if self.mode == "text":
-            self.mode == "comp"
+        if self.mode == "comp":
+            self.mode == "text"
         else:
-            self.mode = "text"
+            self.mode = "comp"
 
     def start_new_round(self):
         self.player1_score = 0
         self.player2_score = 0
         self.generate_grid()
-        self.target_score = random.randint(50, 100)
+        self.target_score = random.randint(100, 250)
 
     def generate_grid(self):
         self.grid = [[Number(random.randint(1, 9),a,b) for a in range(self.grid_size)] for b in range(self.grid_size)]
@@ -75,8 +76,11 @@ class MathemagixGame:
             self.select_numbers()
         else:
             self.read_move(move)
+        self.updateGrid()
         self.switch_players()
 
+    def updateGrid(self):
+        self.gridValues = [[self.grid[a][b].value for a in range(len(self.grid))] for b in range(len(self.grid))]
 
     def check_adjacency(self, num1, num2):
 
@@ -176,45 +180,12 @@ class MathemagixGame:
                                 legal_moves.append(["/", row, col, adj_row, adj_col])
 
         return legal_moves    
-
+    def randomMoveSelector(self):
+        possible_moves = self.get_legal_moves()
+        return possible_moves[random.randrange(len(possible_moves))]
     def check_win_condition(self):
         if self.player1_score == self.target_score:
             return 1
         elif self.player2_score == self.target_score:
             return 2
         return None
-    
-
-# Example usage
-game = MathemagixGame(5)
-game.start_new_round()
-print("Target Score:", game.target_score)
-game.mode = "comp"
-turns = 0
-while True:
-    # Display the grid with numbers
-    if not len(game.get_legal_moves()):
-        game.generate_grid()
-    print("Grid:")
-    for row in game.grid:
-        for number in row:
-            print(number, end=" ")
-        print()
-    available_moves = game.get_legal_moves()
-    print("Player 1 Score:", game.player1_score)
-    print("Player 2 Score:", game.player2_score)
-    print(available_moves)
-
-    selected_move = available_moves[random.randrange(len(available_moves))]
-    game.takeTurn(selected_move)
-    turns += 1
-    winner = game.check_win_condition()
-    if winner:
-        print("Final Score:")
-        print("Player 1 Score:", game.player1_score)
-        print("Player 2 Score:", game.player2_score)
-        print("Player", winner, "wins!")
-        break
-
-    print()
-print(f"Turns: {turns}")

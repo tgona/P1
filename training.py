@@ -1,7 +1,7 @@
 from game import MathemagixGame
 import random
 # Example usage
-game = MathemagixGame(5)
+game = MathemagixGame(4)
 game.start_new_round()
 print("Target Score:", game.target_score)
 game.mode = "comp"
