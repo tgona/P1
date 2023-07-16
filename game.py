@@ -1,5 +1,5 @@
 import random
-
+import hashlib
 class Number:
     def __init__(self, value, row, col):
         self.value = value
@@ -41,6 +41,7 @@ class MathemagixGame:
 
     def generate_grid(self):
         self.grid = [[Number(random.randint(1, 9),a,b) for a in range(self.grid_size)] for b in range(self.grid_size)]
+        self.updateGrid()
 
     def select_numbers(self):
         first_check = True
@@ -166,7 +167,7 @@ class MathemagixGame:
                     if self.current_player == 1:
                         if not self.player1_score % number.number:
                             legal_moves.append(["/", row, col])
-                    for direction in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                    for direction in [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, 1), (1, -1), (-1, -1)]:
                         adj_row = row + direction[0]
                         adj_col = col + direction[1]
 
@@ -179,7 +180,11 @@ class MathemagixGame:
                             if not adj_number.selected and not adj_number.number % number.number:
                                 legal_moves.append(["/", row, col, adj_row, adj_col])
 
-        return legal_moves    
+        return legal_moves
+    def hash_state(self):
+        state_str = str(self.gridValues)
+        state_hash = hashlib.md5(state_str.encode()).hexdigest()
+        return state_hash    
     def randomMoveSelector(self):
         possible_moves = self.get_legal_moves()
         return possible_moves[random.randrange(len(possible_moves))]
